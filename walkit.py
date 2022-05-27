@@ -24,9 +24,10 @@ class Database:
         cur = self.connection.cursor()
 
         if not date:
-            date = dt.datetime.now()
+            date = dt.datetime.now().date()
 
         cur.execute("insert into walks values (?, ?)", (date, metres))
+
         cur.close()
         self.connection.commit()
 
