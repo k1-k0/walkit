@@ -26,6 +26,7 @@ class Database:
         if not date:
             date = dt.datetime.now().date()
 
+        # TODO: Options if date already exists in table: Rewrite, Append, Nothing
         cur.execute("insert into walks values (?, ?)", (date, metres))
 
         cur.close()
