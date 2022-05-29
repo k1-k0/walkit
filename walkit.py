@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import sqlite3
 from typing import Optional, Tuple, List
 import datetime as dt
@@ -5,6 +6,7 @@ import datetime as dt
 from utils import get_database_path
 
 
+# TODO: add logger
 class Database:
     def __init__(self):
         self.path = get_database_path() 
@@ -14,60 +16,57 @@ class Database:
         self.connection.commit()
         self.connection.close()
 
-    def _prepare_table(self):
-        # TODO add check for table existence 
-        cur = self.connection.cursor()
-        cur.execute("create table walks (date TIMESTAMP, metres INTEGER)")
-
-        cur.close()
-        self.connection.commit()
-
     def insert(self, sql: str, values: Optional[Tuple] = None):
-        cur = self.connection.cursor()
-
-        cur.execute(sql) if not values else cur.execute(sql, values)
-        
-        cur.close()
+        with self._get_cursor() as cur:
+            cur.execute(sql) if not values else cur.execute(sql, values)
         self.connection.commit()
 
     def select(self, sql: str, values: Optional[Tuple] = None) -> List:
-        cur = self.connection.cursor()
-
-        cur.execute(sql) if not values else cur.execute(sql, values)
-
-        items = cur.fetchall()
-        cur.close()
-
+        with self._get_cursor() as cur:
+            cur.execute(sql) if not values else cur.execute(sql, values)
+            items = cur.fetchall()
         return items
 
     def delete(self, sql: str) -> None:
+        with self._get_cursor() as cur:
+            cur.execute(sql)
+        self.connection.commit()
+
+    @contextmanager
+    def _get_cursor(self):
         cur = self.connection.cursor()
-        
-        cur.execute(sql)
-        
+        yield cur
         cur.close()
+
+    def _prepare_table(self):
+        # TODO add check for table existence 
+        with self._get_cursor() as cur:
+            cur.execute("create table walks (date TIMESTAMP, metres INTEGER)")
         self.connection.commit()
 
 
-    # TODO: this and below method get out to separate class,
-    # which will work with business logic (add/remove/list records)
+class Walkit:
+    def __init__(self, database: Database):
+        self._database = database
 
     def add_record(self, metres: int = 0, 
                    date: Optional[dt.datetime] = None) -> None:
-        cur = self.connection.cursor()
-
         if not date:
             date = dt.datetime.now().date()
 
         # TODO: Options if date already exists in table: Rewrite, Append, Nothing
         query = "insert into walks values (?, ?)"
-        self.insert(sql=query, values=(date, metres))
+        self._database.insert(sql=query, values=(date, metres))
 
-    def get_records(self) -> None:
+    def get_records(self) -> List[Tuple]:
         query = "select * from walks"
-        items = self.select(sql=query)
+        items = self._database.select(sql=query)
         return items
     
     def delete_record(self, date: str) -> None:
         query = f"delete from walks where date = '{date}'"
-        self.delete(sql=query)
+        self._database.delete(sql=query)
+    
+    def total_metres(self) -> int:
+        items = self.get_records()
+        return sum(metres for _, metres in items)
