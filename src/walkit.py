@@ -22,7 +22,8 @@ class Walkit:
 
     def get_records(self) -> List[Tuple]:
         """Returns all records from database"""
-        query = "select * from walks"
+        # TODO: Print beautiful table, not list of tuples
+        query = "select * from walks order by walks.date"
         items = self._database.select(sql=query)
         return items
 
