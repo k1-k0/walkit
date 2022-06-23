@@ -7,6 +7,16 @@ class Database:
     def __init__(self, path: str):
         self.path = path
         self.connection = sqlite3.Connection(self.path)
+        self.check_tables()
+
+    def check_tables(self):
+        # TODO: Move table name to env name
+        check_query = \
+                "SELECT name FROM sqlite_master WHERE type='table' and name='walks';"
+        result = self.connection.execute(check_query).fetchone()
+        if not result:
+            self._prepare_table()
+            print(f"Table 'walks' has been successfully created!")
 
     def close(self):
         self.connection.commit()
@@ -35,7 +45,6 @@ class Database:
         cur.close()
 
     def _prepare_table(self):
-        # TODO add check for table existence 
         with self._get_cursor() as cur:
-            cur.execute("create table walks (date TIMESTAMP, metres INTEGER)")
+            cur.execute("create table if not exists walks (date TIMESTAMP, metres INTEGER)")
         self.connection.commit()
