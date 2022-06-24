@@ -15,7 +15,10 @@ def main():
         walkit.print_total_metres()
     elif args.add:
         metres, date = parse_add_values(*args.add)
-        walkit.add_record(metres, date) if date else walkit.add_record(metres)
+        if date:
+            walkit.add_or_update_record(metres, date)
+        else:
+            walkit.add_or_update_record(metres)
     elif args.print:
         # TODO: Also must traveled metres for specified date
         walkit.print_all_records()

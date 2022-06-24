@@ -10,28 +10,47 @@ class Walkit:
     def __init__(self, database: Database):
         self._database = database
 
-    def add_record(self, metres: int = 0, 
-                   date: Optional[dt.datetime] = None) -> None:
-        """Add record to database"""
+    def add_or_update_record(self, metres: int = 0, 
+                             date: Optional[dt.datetime] = None) -> None:
+        """Add record to database or update if it already exists"""
         if not date:
             date = dt.datetime.now()
 
-        # TODO: Options if date already exists in table: Rewrite, Append, Nothing
+        record = self.get_record(str(date.date()))
+        if record:
+            db_date, db_metres = record[0], record[1]
+            self.update_record(db_date, metres)
+            print(f'Record ({db_metres}m, {db_date}) has been updated '\
+                  f'with new value {metres}m.')
+            return 
+
         query = "insert into walks values (?, ?)"
         self._database.insert(sql=query, values=(date.date(), metres))
-        print(f'Record ({metres}m, {date.date()}) has been written!')
+        print(f'Record ({metres}m, {date.date()}) has been written.')
+
+    def update_record(self, date: str, metres: int) -> None:
+        """Update record from database with specified date by given metres"""
+        query = f"update walks set metres = ? where date = ?"
+        record = self._database.update(sql=query, values=(metres,date))
+        return record
 
     def get_records(self) -> List[Tuple]:
         """Returns all records from database"""
         query = "select * from walks order by walks.date"
-        items = self._database.select(sql=query)
-        return items
+        records = self._database.select(sql=query)
+        return records
+
+    def get_record(self, date: str) -> Tuple[str, int]:
+        """Return record from database with specified date"""
+        query = f"select * from walks where date = ?"
+        record = self._database.select_one(sql=query, values=(date,))
+        return record
 
     def delete_record(self, date: str) -> None:
         """Delete record by given date"""
         query = f"delete from walks where date = '{date}'"
         self._database.delete(sql=query)
-        print(f'Record ({date}) has been removed!')
+        print(f'Record ({date}) has been removed.')
 
     def print_all_records(self) -> None:
         """Print table of all records contained in database"""

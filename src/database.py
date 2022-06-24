@@ -18,20 +18,31 @@ class Database:
             self._prepare_table()
             print(f"Table 'walks' has been successfully created!")
 
-    def close(self):
+    def close(self) -> None:
         self.connection.commit()
         self.connection.close()
 
-    def insert(self, sql: str, values: Optional[Tuple] = None):
+    def insert(self, sql: str, values: Optional[Tuple] = None) -> None:
         with self._get_cursor() as cur:
             cur.execute(sql) if not values else cur.execute(sql, values)
         self.connection.commit()
 
     def select(self, sql: str, values: Optional[Tuple] = None) -> List:
         with self._get_cursor() as cur:
-            cur.execute(sql) if not values else cur.execute(sql, values)
-            items = cur.fetchall()
+            cur.execute(sql)
+            items = cur.fetchall() 
         return items
+
+    def select_one(self, sql: str, values: Tuple) -> Tuple:
+        with self._get_cursor() as cur:
+            cur.execute(sql, values)
+            items = cur.fetchone()
+        return items
+
+    def update(self, sql: str, values: Tuple) -> None:
+        with self._get_cursor() as cur:
+            cur.execute(sql, values)
+        self.connection.commit()
 
     def delete(self, sql: str) -> None:
         with self._get_cursor() as cur:
@@ -44,7 +55,7 @@ class Database:
         yield cur
         cur.close()
 
-    def _prepare_table(self):
+    def _prepare_table(self) -> None:
         with self._get_cursor() as cur:
             cur.execute("create table if not exists walks (date TIMESTAMP, metres INTEGER)")
         self.connection.commit()
