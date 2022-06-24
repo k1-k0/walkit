@@ -59,15 +59,16 @@ class Walkit:
             print('There are no records in database.')
 
         col_sep, row_sep = '|', '-'
-        col1_width, col2_width = 14, 20
+        col1_width, col2_width = 14, 24
         # TODO: Move to utils? Is it needed in the future?
         def formatted_print(first: str, second: str):
             print(f'{first:^{col1_width}}{col_sep}{second:^{col2_width}}{col_sep}')
 
-        formatted_print("Date", "Distance")
+        formatted_print("Date", "Distance(m)")
         formatted_print(row_sep*col1_width, row_sep*col2_width)
         for date, metres in records:
-            distance_info = f'{metres}m ({metres/1000}km)'
+            metres_info, km_info = f'{metres}m', f'{metres/1000}km'
+            distance_info = f'{metres_info:>10} == {km_info:<10}'
             formatted_print(date, distance_info)
 
     def print_total_metres(self) -> None:
